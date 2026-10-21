@@ -261,3 +261,7 @@ pre.code{ background:var(--room-2); color:var(--paper-dim); border:1px solid rgb
 .machine{ margin-bottom:14px; }
 .machine-note{ margin-top:10px; }
 @media (max-width:560px){ .stats .stat:last-child:nth-child(odd){ grid-column:1 / -1; } }
+
+/* zero must read as a zero: lining figures, and the mints and burns line in the mono font */
+.stat-value{ font-variant-numeric: lining-nums tabular-nums; }
+#statKinds{ font-family:var(--mono); font-size:15px; font-weight:700; line-height:1.5; }
