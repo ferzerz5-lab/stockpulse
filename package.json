@@ -1,0 +1,9 @@
+{
+  "name": "stockpulse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Live tokenized stock transfers on Robinhood Chain, via Quicknode.",
+  "engines": {
+    "node": ">=18"
+  }
+}
