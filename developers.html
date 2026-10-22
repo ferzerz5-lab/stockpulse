@@ -7,7 +7,7 @@
 <meta name="description" content="Contract addresses, a ready eth_getLogs request, and the JSON shape behind StockPulse.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Zilla+Slab:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&family=Zilla+Slab:wght@600;700&display=swap" rel="stylesheet">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -68,7 +68,7 @@
       <h2>Decode a log</h2>
       <ul>
         <li><code>topics[1]</code> is the sender and <code>topics[2]</code> is the receiver. Each is a 32-byte value, so take the last 20 bytes as the address.</li>
-        <li><code>data</code> is the amount. Divide it by 10<sup>18</sup> to get shares.</li>
+        <li><code>data</code> is the amount. Divide it by 10<sup>18</sup> to get the token amount.</li>
         <li>A transfer from the zero address is a mint. A transfer to the zero address is a burn. StockPulse tags both on the tape.</li>
         <li>Logs carry a block number, not a timestamp. StockPulse estimates each time from the latest block, so treat it as accurate to a second or two.</li>
       </ul>
@@ -84,7 +84,7 @@
         "symbol": "AAPL or NVDA",
         "from": "0x address",
         "to": "0x address",
-        "shares": number,
+        "amount": number,
         "txHash": "0x hash",
         "logIndex": "hex string",
         "blockNumber": number,

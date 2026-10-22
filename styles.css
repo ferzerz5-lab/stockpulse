@@ -265,3 +265,57 @@ pre.code{ background:var(--room-2); color:var(--paper-dim); border:1px solid rgb
 /* zero must read as a zero: lining figures, and the mints and burns line in the mono font */
 .stat-value{ font-variant-numeric: lining-nums tabular-nums; }
 #statKinds{ font-family:var(--mono); font-size:15px; font-weight:700; line-height:1.5; }
+
+/* ================= v3: readability =================
+   Brighter secondary text on the dark room, darker secondary text on the paper,
+   larger type, and a proportional font for sentences. Mono stays for data. */
+:root{ --ink-dim:#A99F8A; --sans:'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+.tape, .table-wrap, .article-wrap{ --ink-dim:#51493B; }
+body{ font-size:16px; line-height:1.6; }
+
+.lamp-text{ font-size:12.5px; }
+.masthead-sub{ font-family:var(--sans); font-size:17px; line-height:1.6; max-width:44ch; color:var(--paper-dim); }
+.masthead-sub b{ color:var(--paper); font-weight:500; }
+.panel-btn{ font-size:12px; padding:10px 15px; }
+
+.stat-label{ font-family:var(--sans); font-size:13.5px; color:var(--ink-dim); }
+.stat-value{ font-size:25px; }
+#statKinds{ font-size:15px; }
+.counter-label{ font-size:12px; }
+.filter-label{ font-family:var(--sans); font-size:13.5px; }
+
+.machine-note, .token-line, .meta-line, .subnote, .summary-line, .demo-note{ font-family:var(--sans); font-size:14.5px; line-height:1.7; }
+.token-line, .token-line a{ font-family:var(--mono); font-size:12.5px; }
+.token-line{ font-family:var(--sans); font-size:14px; }
+.token-line a{ font-family:var(--mono); }
+.subnote{ max-width:62ch; }
+.demo-note{ color:var(--brass-light); }
+
+.entry{ font-size:14px; padding:13px 20px; }
+.meta .ago{ font-size:12.5px; }
+.kind{ font-size:12px; }
+.empty-entry, .empty-cell{ font-family:var(--sans); font-size:15px; }
+
+.article{ font-family:var(--sans); font-size:16px; line-height:1.75; }
+.article h2{ font-size:22px; margin:34px 0 10px; }
+.article code, pre.code{ font-family:var(--mono); }
+pre.code{ font-size:13px; }
+.article .tag{ font-family:var(--mono); }
+
+table.data{ font-family:var(--sans); font-size:14.5px; }
+table.data th{ font-size:13px; }
+table.data .num, table.data .addr, table.data td a{ font-family:var(--mono); font-size:13.5px; }
+
+.colophon, .colophon a, .qn-credit span{ font-family:var(--sans); font-size:13.5px; }
+
+@media (max-width:560px){
+  .masthead-sub{ font-size:16px; }
+  .entry{ font-size:12.5px; padding:11px 14px; }
+  .meta .ago{ font-size:11.5px; }
+  .stat-value{ font-size:22px; }
+  table.data .num, table.data .addr, table.data td a{ font-size:12.5px; }
+}
+@media (max-width:560px){
+  .entry{ font-size:12px; gap:6px; grid-template-columns:44px 1fr auto; padding:11px 12px; }
+  .route .arrow{ margin:0 2px; }
+}

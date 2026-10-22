@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>StockPulse | Live tokenized stock transfers on Robinhood Chain</title>
-<meta name="description" content="Every transfer of tokenized AAPL and NVDA shares on Robinhood Chain, printed as a live ticker tape. Powered by Quicknode.">
+<title>StockPulse | Live stock token transfers on Robinhood Chain</title>
+<meta name="description" content="Every transfer of AAPL and NVDA stock tokens on Robinhood Chain, printed as a live ticker tape. Powered by Quicknode.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Zilla+Slab:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&family=Zilla+Slab:wght@600;700&display=swap" rel="stylesheet">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -34,15 +34,15 @@
       <span class="lamp-text" id="lampText">connecting...</span>
     </div>
     <h1>StockPulse</h1>
-    <p class="masthead-sub">every transfer of tokenized <b>AAPL</b> and <b>NVDA</b> shares on <b>Robinhood Chain</b>, printed as it lands</p>
+    <p class="masthead-sub">every transfer of <b>AAPL</b> and <b>NVDA</b> stock tokens on <b>Robinhood Chain</b>, printed as it lands</p>
   </div>
 
   <div class="stats rise" id="stats" style="--i:2">
     <div class="stat"><span class="stat-label">Transfers, last 5 minutes</span><span class="stat-value" id="statCount">-</span></div>
     <div class="stat"><span class="stat-label">Wallets involved</span><span class="stat-value" id="statWallets">-</span></div>
-    <div class="stat"><span class="stat-label">AAPL shares moved</span><span class="stat-value" id="statSharesAAPL">-</span></div>
-    <div class="stat"><span class="stat-label">NVDA shares moved</span><span class="stat-value" id="statSharesNVDA">-</span></div>
-    <div class="stat"><span class="stat-label">Largest transfer</span><span class="stat-value" id="statLargest">-</span></div>
+    <div class="stat"><span class="stat-label">AAPL tokens moved</span><span class="stat-value" id="statSharesAAPL">-</span></div>
+    <div class="stat"><span class="stat-label">NVDA tokens moved</span><span class="stat-value" id="statSharesNVDA">-</span></div>
+    <div class="stat"><span class="stat-label">Largest transfer, in tokens</span><span class="stat-value" id="statLargest">-</span></div>
   </div>
 
   <div class="machine rise" style="--i:3">
@@ -84,7 +84,7 @@
 
   <p class="demo-note" id="demoNote"></p>
 
-  <p class="subnote">Click any line to open its transaction on the block explorer. Only two tickers are on the reel for now, and <a href="about.html">About</a> explains why.</p>
+  <p class="subnote">Amounts are in stock tokens. Click any line to open its transaction on the block explorer. Only two tickers are on the reel for now, and <a href="about.html">About</a> explains why.</p>
 
   <footer class="colophon">
     <div class="colophon-left">

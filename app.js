@@ -143,7 +143,7 @@
         (fresh ? ' style="animation-delay:' + (Math.min(i, 12) * 45) + 'ms"' : '') + '>' +
         '<span class="sym ' + cls + '">' + t.symbol + '</span>' +
         '<span class="route">' + routeHtml(t) + '</span>' +
-        '<span class="meta"><span class="shares">' + fmtShares(t.shares) + ' sh</span><span class="ago" data-ts="' + t.time + '">' + timeAgo(t.time) + '</span></span></a>';
+        '<span class="meta"><span class="shares">' + fmtShares(t.amount) + '</span><span class="ago" data-ts="' + t.time + '">' + timeAgo(t.time) + '</span></span></a>';
       if(fresh) i++;
     });
     tape.innerHTML = html;
@@ -165,8 +165,8 @@
     var wallets = {}, shares = { AAPL: 0, NVDA: 0 }, largest = null, mints = 0, burns = 0;
     list.forEach(function(t){
       [t.from, t.to].forEach(function(a){ a = String(a || "").toLowerCase(); if(a && a !== ZERO) wallets[a] = true; });
-      if(shares[t.symbol] !== undefined) shares[t.symbol] += t.shares;
-      if(!largest || t.shares > largest.shares) largest = t;
+      if(shares[t.symbol] !== undefined) shares[t.symbol] += t.amount;
+      if(!largest || t.amount > largest.amount) largest = t;
       var k = kindOf(t); if(k === "mint") mints++; else if(k === "burn") burns++;
     });
     setText("statCount", String(list.length));
@@ -174,7 +174,7 @@
     setText("statSharesAAPL", fmtShares(shares.AAPL));
     setText("statSharesNVDA", fmtShares(shares.NVDA));
     setText("statShares", fmtShares(FILTER ? shares[FILTER] : shares.AAPL + shares.NVDA));
-    setText("statLargest", largest ? fmtShares(largest.shares) + " sh" + (FILTER ? "" : " " + largest.symbol) : "none");
+    setText("statLargest", largest ? fmtShares(largest.amount) + (FILTER ? "" : " " + largest.symbol) : "none");
     setText("statKinds", mints + (mints === 1 ? " mint, " : " mints, ") + burns + (burns === 1 ? " burn" : " burns"));
   }
 
@@ -191,7 +191,7 @@
         if(!a || a === ZERO) return;
         var w = map[a] || (map[a] = { addr: a, n: 0, sent: 0, recv: 0 });
         if(!(p[1] === "recv" && from === to)) w.n++;   // a self-transfer counts once
-        w[p[1]] += t.shares;
+        w[p[1]] += t.amount;
       });
     });
     var rows = Object.keys(map).map(function(k){ return map[k]; })
@@ -237,7 +237,7 @@
       seen.add(k); all.push(t); fresh[k] = true; added++;
       if(symOk(t) && counts[t.symbol] !== undefined){
         counts[t.symbol]++; setDial(t.symbol, counts[t.symbol]);
-        var level = Math.min(1, Math.max(0.15, t.shares / 60));
+        var level = Math.min(1, Math.max(0.15, t.amount / 60));
         setGauge(t.symbol === "NVDA" ? 0.5 - level * 0.5 : 0.5 + level * 0.5);
       }
     });

@@ -99,7 +99,7 @@ module.exports = async function handler(req, res) {
       const from = "0x" + log.topics[1].slice(26);
       const to = "0x" + log.topics[2].slice(26);
       const rawValue = BigInt(log.data);
-      const shares = Number(rawValue) / 1e18; // 18 decimals, standard ERC-20
+      const amount = Number(rawValue) / 1e18; // 18 decimals, standard ERC-20
       const blockNumber = BigInt(log.blockNumber);
       const approxTimeMs = latestTimestampMs - Number(latest - blockNumber) * 100; // ~100ms/block
       return {
@@ -107,7 +107,7 @@ module.exports = async function handler(req, res) {
         name: token.name || "",
         from,
         to,
-        shares,
+        amount,
         txHash: log.transactionHash,
         logIndex: log.logIndex,
         blockNumber: Number(blockNumber),

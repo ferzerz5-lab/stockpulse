@@ -1,6 +1,6 @@
 # StockPulse
 
-Every transfer of tokenized AAPL and NVDA shares on Robinhood Chain, printed on a live paper-tape page. Built on Quicknode's RPC endpoint for the chain.
+Every transfer of AAPL and NVDA stock tokens on Robinhood Chain, printed on a live paper-tape page. Built on Quicknode's RPC endpoint for the chain.
 
 It is a static site plus one Vercel serverless function (`api/transfers.js`). Robinhood Chain is a standard EVM chain, so recent transfers come from a plain `eth_getLogs` call over the last 3000 blocks (about five minutes). No always-on server is needed. The function answers GET requests and sets a 15 second edge cache, so any number of visitors share one read and Quicknode credits are protected.
 
@@ -10,7 +10,7 @@ Nothing on the site is simulated. If the feed is down or not configured, pages s
 
 - `index.html`: the live tape, five stats, filters for transfers, mints and burns
 - `aapl.html`, `nvda.html`: the same for one ticker, with its contract address
-- `wallets.html`: most active wallets per ticker, ranked by shares moved
+- `wallets.html`: most active wallets per ticker, ranked by tokens moved
 - `developers.html`: contract addresses, a ready `eth_getLogs` request, the JSON shape, how to add a ticker
 - `about.html`: how it works and what it leaves out
 - `privacy.html`, `terms.html`
