@@ -22,6 +22,21 @@
   var walletTicker = "AAPL";
   var counts = { AAPL: 0, NVDA: 0 };
 
+  /* ---------------- preloader ----------------
+     Shown once per browser session on the data pages. It ends when the first read of the chain
+     finishes (data, error or offline), after a short minimum so the animation can be seen. */
+  var preloadStart = Date.now();
+  function hidePreload(){
+    var p = $("preload");
+    if(!p || p.classList.contains("out")) return;
+    var wait = Math.max(0, 1100 - (Date.now() - preloadStart));
+    setTimeout(function(){
+      document.documentElement.classList.remove("preloading");   // lets the page entrance play
+      p.classList.add("out");
+      setTimeout(function(){ if(p.parentNode) p.parentNode.removeChild(p); }, 600);
+    }, wait);
+  }
+
   /* ---------------- helpers ---------------- */
   function $(id){ return document.getElementById(id); }
   function setText(id, text){ var e = $(id); if(e) e.textContent = text; }
@@ -220,6 +235,7 @@
     status = "offline";
     setLamp(false, message);
     renderTape(null); renderStats(); renderWallets();
+    hidePreload();
   }
   function handle(json){
     renderDebug(json);
@@ -249,6 +265,7 @@
     renderWallets();
     if(added > 0 && !firstLoad) pulse(document.querySelector(".slot"), "pulse");
     firstLoad = false;
+    hidePreload();
   }
   function poll(){
     if(document.hidden) return;   // a hidden tab asks for nothing

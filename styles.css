@@ -319,3 +319,43 @@ table.data .num, table.data .addr, table.data td a{ font-family:var(--mono); fon
   .entry{ font-size:12px; gap:6px; grid-template-columns:44px 1fr auto; padding:11px 12px; }
   .route .arrow{ margin:0 2px; }
 }
+
+/* ================= preloader =================
+   One quiet moment per browser session on the data pages: paper feeds out of the slot while
+   the page reads the latest blocks. No percentages, no fake progress. */
+#preload{
+  position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center;
+  background: radial-gradient(circle at 50% 0%, rgba(176,141,62,0.07), transparent 55%), var(--room);
+  transition: opacity 0.5s ease, visibility 0.5s;
+}
+#preload.out{ opacity:0; visibility:hidden; pointer-events:none; }
+html.no-preload #preload{ display:none; }
+html.preloading .rise{ animation-play-state:paused; }
+
+.pl-inner{ display:flex; flex-direction:column; align-items:center; }
+.pl-brand{ font-family:var(--slab); font-weight:700; font-size:30px; color:var(--paper); margin-bottom:22px; animation:rise 0.5s cubic-bezier(.2,.8,.2,1) both; }
+.pl-slot{
+  position:relative; z-index:2; width:150px; height:10px; border-radius:6px;
+  background:linear-gradient(180deg, #0a0806, #221d14);
+  box-shadow: inset 0 2px 3px rgba(0,0,0,0.7), 0 1px 0 rgba(237,231,217,0.05);
+  animation: slotglow 1.3s ease-in-out infinite;
+}
+.pl-feed{ width:116px; height:116px; overflow:hidden; margin-top:-2px; }
+.pl-paper{
+  height:116px; padding-top:16px; display:flex; flex-direction:column; gap:14px;
+  background:var(--paper); box-shadow:0 20px 40px -18px rgba(0,0,0,0.7);
+  transform:translateY(-100%); animation: plslide 0.6s cubic-bezier(.2,.8,.2,1) 0.1s forwards;
+}
+@keyframes plslide{ to{ transform:none; } }
+.pl-line{ display:block; height:5px; margin-left:14px; background:var(--ink); transform:scaleX(0); transform-origin:left; animation: plink 0.25s ease-out forwards; }
+.pl-line.l1{ width:64%; background:var(--red);   animation-delay:0.35s; }
+.pl-line.l2{ width:44%;                           animation-delay:0.5s; }
+.pl-line.l3{ width:58%; background:var(--green); animation-delay:0.65s; }
+.pl-line.l4{ width:36%;                           animation-delay:0.8s; }
+@keyframes plink{ to{ transform:scaleX(1); } }
+.pl-text{ font-family:var(--sans); font-size:14px; color:var(--ink-dim); margin-top:18px; }
+
+@media (prefers-reduced-motion: reduce){
+  #preload{ display:none; }
+  html.preloading .rise{ animation-play-state:running; }
+}

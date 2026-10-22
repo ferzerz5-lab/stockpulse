@@ -12,8 +12,34 @@
 <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="styles.css">
+<script>
+(function(){
+  var h = document.documentElement, skip = false;
+  try { if (sessionStorage.getItem("sp_seen")) { skip = true; } else { sessionStorage.setItem("sp_seen", "1"); } } catch (e) {}
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) { skip = true; }
+  if (skip) { h.classList.add("no-preload"); }
+  else {
+    h.classList.add("preloading");
+    // Failsafe: never hold the page longer than this, whatever happens.
+    setTimeout(function(){ h.classList.add("no-preload"); h.classList.remove("preloading"); }, 4500);
+  }
+})();
+</script>
+<noscript><style>#preload{display:none !important;} html.preloading .rise{animation-play-state:running !important;}</style></noscript>
 </head>
 <body data-page="nvda" data-ticker="NVDA">
+<div id="preload" role="status" aria-live="polite" aria-label="Loading StockPulse">
+  <div class="pl-inner">
+    <div class="pl-brand">StockPulse</div>
+    <div class="pl-slot"></div>
+    <div class="pl-feed">
+      <div class="pl-paper">
+        <span class="pl-line l1"></span><span class="pl-line l2"></span><span class="pl-line l3"></span><span class="pl-line l4"></span>
+      </div>
+    </div>
+    <p class="pl-text">Reading the latest blocks</p>
+  </div>
+</div>
 <div class="room">
 
   <header class="topbar rise" style="--i:0">
