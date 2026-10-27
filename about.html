@@ -37,7 +37,16 @@
     <div class="article">
       <h2>What this is</h2>
       <p>Robinhood Chain is an Arbitrum-based layer 2 built for stock tokens: on-chain tokens that represent real-world stocks, which you can hold in a wallet and transfer like any other token. StockPulse watches two of them: <span class="tag aapl">AAPL</span> <span class="tag nvda">NVDA</span></p>
-      <p>Every transfer of either token from the last five minutes is read from the chain and printed onto the tape. The page checks for new transfers every 20 seconds.</p>
+      <p>Every transfer of either token from the last five minutes is read from the chain and printed onto the tape. The page checks for new transfers every 3 seconds.</p>
+
+      <h2>Reading a line</h2>
+      <p>Each line shows the ticker, the sender and receiver (shortened), the number of tokens, and about how long ago it happened. A line tagged <b>mint</b> or <b>burn</b> created or destroyed tokens instead of moving them between wallets. Click any line to open its transaction on the block explorer, and use the filters to show only transfers, mints or burns.</p>
+
+      <h2>Reading a line</h2>
+      <p>Each line shows the ticker, the sender and receiver (shortened), the number of tokens, and about how long ago it happened. A line tagged <b>mint</b> or <b>burn</b> created or destroyed tokens instead of moving them between wallets. Click any line to open its transaction on the block explorer, and use the filters to show only transfers, mints or burns.</p>
+
+      <h2>Reading a line</h2>
+      <p>Each line shows the ticker, the sender and receiver (shortened), the number of tokens, and about how long ago it happened. A line tagged <b>mint</b> or <b>burn</b> created or destroyed tokens instead of moving them between wallets. Click any line to open its transaction on the block explorer, and use the filters to show only transfers, mints or burns.</p>
 
       <h2>Reading a line</h2>
       <p>Each line shows the ticker, the sender and receiver (shortened), the number of tokens, and about how long ago it happened. A line tagged <b>mint</b> or <b>burn</b> created or destroyed tokens instead of moving them between wallets. Click any line to open its transaction on the block explorer, and use the filters to show only transfers, mints or burns.</p>
@@ -52,7 +61,7 @@
       <p>The word "stock ticker" comes from a machine: a paper tape teleprinter that physically printed trades as they happened, the first real-time market data feed. A stock token on a blockchain produces the same kind of record, one line each time ownership moves. So the page prints it as a tape.</p>
 
       <h2>How it's built</h2>
-      <p>Robinhood Chain is a standard EVM chain, so reading recent transfers takes one <b>eth_getLogs</b> call over the last five minutes of blocks. That call goes through a <a href="https://www.quicknode.com" target="_blank" rel="noopener">Quicknode</a> endpoint for the chain, from a small serverless function. The page asks that function for new transfers every 20 seconds, and responses are cached for 15 seconds so many visitors share one read. Addresses are shortened for display, and the time on each line is estimated from its block number, so it can be off by a second or two.</p>
+      <p>Robinhood Chain is a standard EVM chain, so reading recent transfers takes one <b>eth_getLogs</b> call over the last five minutes of blocks. That call goes through a <a href="https://www.quicknode.com" target="_blank" rel="noopener">Quicknode</a> endpoint for the chain, from a small serverless function. The page asks that function for new transfers every 3 seconds, and responses are cached for a few seconds so many visitors share one read. Addresses are shortened for display, and the time on each line is estimated from its block number, so it can be off by a second or two.</p>
 
       <h2>Why only two tickers</h2>
       <p>Robinhood Chain has hundreds of stock tokens, all deployed through a single factory contract. In theory you could find every one by scanning that contract's full event history. In practice the chain produces a block roughly every 100 milliseconds, so it is already tens of millions of blocks deep, and most RPC providers cap a single log query at a few thousand blocks. Building the token list that way would take thousands of calls, which is too much to run on every page load.</p>

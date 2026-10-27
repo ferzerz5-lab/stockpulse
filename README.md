@@ -2,7 +2,7 @@
 
 Every transfer of AAPL and NVDA stock tokens on Robinhood Chain, printed on a live paper-tape page. Built on Quicknode's RPC endpoint for the chain.
 
-It is a static site plus one Vercel serverless function (`api/transfers.js`). Robinhood Chain is a standard EVM chain, so recent transfers come from a plain `eth_getLogs` call over the last 3000 blocks (about five minutes). No always-on server is needed. The function answers GET requests and sets a 15 second edge cache, so any number of visitors share one read and Quicknode credits are protected.
+It is a static site plus one Vercel serverless function (`api/transfers.js`). Robinhood Chain is a standard EVM chain, so recent transfers come from a plain `eth_getLogs` call over the last 3000 blocks (about five minutes). No always-on server is needed. The page loads the last five minutes from `/api/transfers` (cached 15 seconds at the edge), then asks `/api/transfers?w=live` every 3 seconds for just the newest 300 blocks (cached 3 seconds). Only those two window sizes are accepted, so any number of visitors share the same two cached answers and Quicknode credits stay predictable. A hidden tab asks for nothing, and after 10 minutes with no touch, click, key or scroll the page slows to one check every 20 seconds.
 
 Nothing on the site is simulated. If the feed is down or not configured, pages stay empty and say so.
 

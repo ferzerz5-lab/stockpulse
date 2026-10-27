@@ -74,11 +74,12 @@
       </ul>
 
       <h2>This site's own endpoint</h2>
-      <p>The pages get their data from <code>GET /api/transfers</code>. It returns JSON in this shape, oldest transfer first:</p>
+      <p>The pages load the last five minutes from <code>GET /api/transfers</code>, then poll <code>GET /api/transfers?w=live</code> every few seconds for just the newest blocks. Both return JSON in this shape, oldest transfer first:</p>
 <pre class="code">{
   "demo": false,
   "data": {
     "latestBlock": "string",
+    "latestTime": "ISO timestamp of that block",
     "transfers": [
       {
         "symbol": "AAPL or NVDA",
@@ -93,7 +94,7 @@
     ]
   }
 }</pre>
-      <p>Responses are cached for 15 seconds at the edge, so many visitors share one read. If the feed is not connected the response is <code>{"demo": true}</code>, and if the chain call fails it carries an <code>error</code> field. The page treats both as offline and shows nothing rather than inventing data.</p>
+      <p>Responses are cached at the edge, for 3 seconds on the live view and 15 seconds on the five-minute view, so many visitors share one read. If the feed is not connected the response is <code>{"demo": true}</code>, and if the chain call fails it carries an <code>error</code> field. The page treats both as offline and shows nothing rather than inventing data.</p>
 
       <h2>Add a ticker</h2>
       <ol>

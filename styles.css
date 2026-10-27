@@ -359,3 +359,9 @@ html.preloading .rise{ animation-play-state:paused; }
   #preload{ display:none; }
   html.preloading .rise{ animation-play-state:running; }
 }
+
+/* ---------------- live readout ---------------- */
+.live-readout{ font-family:var(--sans); font-size:13.5px; color:var(--ink-dim); margin:-2px 0 12px; }
+.live-readout[hidden]{ display:none; }
+.live-readout b{ display:inline-block; font-family:var(--mono); font-size:13px; font-weight:700; color:var(--paper-dim); }
+.live-readout span{ font-family:var(--mono); font-size:13px; color:var(--paper-dim); }

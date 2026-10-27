@@ -38,7 +38,8 @@ const TRANSFER_TOPIC0 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55
 // roughly 5 minutes of history. Small enough to stay well under any
 // provider's getLogs range cap, wide enough not to miss activity between
 // polls.
-const BLOCK_WINDOW = 3000n;
+const BLOCK_WINDOW = 3000n;        // the five-minute view, used on page load and after a gap
+const LIVE_BLOCK_WINDOW = 300n;    // the live view, about 30 seconds, polled every few seconds
 
 module.exports = async function handler(req, res) {
   // GET and POST both work. The site uses GET so Vercel's CDN can cache the
@@ -52,6 +53,11 @@ module.exports = async function handler(req, res) {
     res.status(200).json({ demo: true, reason: "QN_RH_RPC_URL not set" });
     return;
   }
+
+  // Only two window sizes are allowed, so every visitor shares the same two cached answers.
+  let live = false;
+  try { live = new URL(req.url, "http://localhost").searchParams.get("w") === "live"; } catch (e) {}
+  const windowBlocks = live ? LIVE_BLOCK_WINDOW : BLOCK_WINDOW;
 
   try {
     const controller = new AbortController();
@@ -78,7 +84,7 @@ module.exports = async function handler(req, res) {
     const latestHex = latestBlockObj.number;
     const latest = BigInt(latestHex);
     const latestTimestampMs = Number(BigInt(latestBlockObj.timestamp)) * 1000;
-    const fromBlock = latest - BLOCK_WINDOW > 0n ? latest - BLOCK_WINDOW : 0n;
+    const fromBlock = latest - windowBlocks > 0n ? latest - windowBlocks : 0n;
 
     const logs = await rpcCall("eth_getLogs", [{
       address: WATCHLIST.map((w) => w.address),
@@ -117,8 +123,14 @@ module.exports = async function handler(req, res) {
 
     // Cache for 15 seconds at the edge. However many people have the site open,
     // Quicknode is asked at most a few times a minute, which protects the monthly credits.
-    res.setHeader("Cache-Control", "public, s-maxage=15, stale-while-revalidate=30");
-    res.status(200).json({ demo: false, data: { transfers, latestBlock: latest.toString() } });
+    // Live view: cached for 3 seconds. Five-minute view: cached for 15 seconds.
+    // However many people have the site open, Quicknode is asked a few times a minute at most,
+    // which protects the monthly credits.
+    res.setHeader("Cache-Control", live ? "public, s-maxage=3" : "public, s-maxage=15, stale-while-revalidate=30");
+    res.status(200).json({
+      demo: false,
+      data: { transfers, latestBlock: latest.toString(), latestTime: new Date(latestTimestampMs).toISOString() },
+    });
   } catch (err) {
     res.status(502).json({ error: "Upstream request failed", detail: String(err && err.message ? err.message : err) });
   }

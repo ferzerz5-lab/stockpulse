@@ -14,7 +14,10 @@
 
   var all = [];            // every transfer seen this visit, newest first
   var seen = new Set();
-  var windowList = [];     // transfers from the most recent poll (the last ~5 minutes)
+  var latestBlock = null;  // newest block number the server has reported
+  var latestTimeMs = 0;    // that block's timestamp, used as 'now' for the five-minute window
+  var lastOkAt = 0;        // when the last good answer arrived (browser clock)
+  var topBlock = -1;       // block number of the newest line on the tape
   var status = "connecting";   // connecting | live | offline
   var loaded = false;
   var firstLoad = true;
@@ -148,20 +151,42 @@
     var list = all.filter(function(t){
       return symOk(t) && (kindFilter === "all" || kindOf(t) === kindFilter);
     }).slice(0, MAX_SHOWN);
-    if(!list.length){ tape.innerHTML = '<div class="empty-entry">' + emptyText() + '</div>'; return; }
+    if(!list.length){ tape.innerHTML = '<div class="empty-entry">' + emptyText() + '</div>'; topBlock = -1; return; }
     var html = "", i = 0;
     list.forEach(function(t){
       var fresh = freshKeys && freshKeys[keyOf(t)];
-      var cls = WATCHLIST.indexOf(t.symbol) > -1 ? t.symbol : "other";
-      var href = hexOk(t.txHash) ? EXPLORER + "/tx/" + t.txHash : "#";
-      html += '<a class="entry' + (fresh ? ' fresh' : '') + '" href="' + href + '" target="_blank" rel="noopener" title="Open this transaction on the block explorer"' +
-        (fresh ? ' style="animation-delay:' + (Math.min(i, 12) * 45) + 'ms"' : '') + '>' +
-        '<span class="sym ' + cls + '">' + t.symbol + '</span>' +
-        '<span class="route">' + routeHtml(t) + '</span>' +
-        '<span class="meta"><span class="shares">' + fmtShares(t.amount) + '</span><span class="ago" data-ts="' + t.time + '">' + timeAgo(t.time) + '</span></span></a>';
+      html += rowHtml(t, fresh, i);
       if(fresh) i++;
     });
     tape.innerHTML = html;
+    topBlock = list[0].blockNumber;
+  }
+  function rowHtml(t, fresh, i){
+    var cls = WATCHLIST.indexOf(t.symbol) > -1 ? t.symbol : "other";
+    var href = hexOk(t.txHash) ? EXPLORER + "/tx/" + t.txHash : "#";
+    return '<a class="entry' + (fresh ? ' fresh' : '') + '" href="' + href + '" target="_blank" rel="noopener" title="Open this transaction on the block explorer"' +
+      (fresh ? ' style="animation-delay:' + (Math.min(i, 12) * 45) + 'ms"' : '') + '>' +
+      '<span class="sym ' + cls + '">' + t.symbol + '</span>' +
+      '<span class="route">' + routeHtml(t) + '</span>' +
+      '<span class="meta"><span class="shares">' + fmtShares(t.amount) + '</span><span class="ago" data-ts="' + t.time + '">' + timeAgo(t.time) + '</span></span></a>';
+  }
+  // New lines slide in on top without rebuilding the whole tape, so hovering and clicking stay steady.
+  function prependToTape(freshNewestFirst){
+    var tape = $("tape");
+    if(!tape) return;
+    var vis = freshNewestFirst.filter(function(t){ return symOk(t) && (kindFilter === "all" || kindOf(t) === kindFilter); });
+    if(!vis.length) return;
+    var outOfOrder = vis.some(function(t){ return t.blockNumber < topBlock; });
+    if(outOfOrder || tape.querySelector(".empty-entry")){
+      var map = {}; vis.forEach(function(t){ map[keyOf(t)] = true; });
+      renderTape(map);
+      return;
+    }
+    var html = "";
+    vis.forEach(function(t, i){ html += rowHtml(t, true, i); });
+    tape.insertAdjacentHTML("afterbegin", html);
+    while(tape.children.length > MAX_SHOWN) tape.removeChild(tape.lastChild);
+    topBlock = vis[0].blockNumber;
   }
   // Keep the "Xs ago" labels honest as time passes.
   setInterval(function(){
@@ -169,14 +194,15 @@
     for(var i = 0; i < labels.length; i++) labels[i].textContent = timeAgo(labels[i].getAttribute("data-ts"));
   }, 5000);
 
-  /* ---------------- stats (last poll window only) ---------------- */
+  /* ---------------- stats (the last five minutes) ---------------- */
   function renderStats(){
     if(!$("stats")) return;
     if(!loaded){
       ["statCount","statWallets","statSharesAAPL","statSharesNVDA","statShares","statLargest","statKinds"].forEach(function(id){ setText(id, "-"); });
       return;
     }
-    var list = windowList.filter(symOk);
+    var refMs = latestTimeMs || Date.now();
+    var list = all.filter(function(t){ return symOk(t) && refMs - new Date(t.time).getTime() <= 300000; });
     var wallets = {}, shares = { AAPL: 0, NVDA: 0 }, largest = null, mints = 0, burns = 0;
     list.forEach(function(t){
       [t.from, t.to].forEach(function(a){ a = String(a || "").toLowerCase(); if(a && a !== ZERO) wallets[a] = true; });
@@ -234,23 +260,31 @@
   function goOffline(message){
     status = "offline";
     setLamp(false, message);
+    renderReadout(false);
     renderTape(null); renderStats(); renderWallets();
     hidePreload();
   }
   function handle(json){
     renderDebug(json);
     if(json.demo){ goOffline("The live feed is not connected yet. Nothing on this page is simulated, so it stays empty until it is."); return; }
-    if(json.error){ goOffline("The feed hit an error and retries every 20 seconds. Nothing on this page is simulated."); return; }
+    if(json.error){ goOffline("The feed hit an error and keeps retrying. Nothing on this page is simulated."); return; }
     status = "live"; loaded = true;
     setLamp(true);
     var transfers = (json.data && json.data.transfers) || [];
-    windowList = transfers;
+    lastOkAt = Date.now();
+    if(json.data && json.data.latestBlock){
+      var changed = latestBlock !== json.data.latestBlock;
+      latestBlock = json.data.latestBlock;
+      var tm = Date.parse(json.data.latestTime);
+      if(!isNaN(tm)) latestTimeMs = tm;
+      renderReadout(changed);
+    }
 
-    var fresh = {}, added = 0;
+    var fresh = {}, freshItems = [], added = 0;
     transfers.forEach(function(t){            // logs arrive oldest first
       var k = keyOf(t);
       if(seen.has(k)) return;
-      seen.add(k); all.push(t); fresh[k] = true; added++;
+      seen.add(k); all.push(t); fresh[k] = true; freshItems.push(t); added++;
       if(symOk(t) && counts[t.symbol] !== undefined){
         counts[t.symbol]++; setDial(t.symbol, counts[t.symbol]);
         var level = Math.min(1, Math.max(0.15, t.amount / 60));
@@ -260,23 +294,55 @@
     all.sort(sortNewestFirst);
     if(all.length > MAX_KEPT) all.length = MAX_KEPT;
 
-    renderTape(fresh);
+    if(firstLoad){ renderTape(fresh); }
+    else if(added > 0){ prependToTape(freshItems.sort(sortNewestFirst)); }
     renderStats();
-    renderWallets();
+    if(firstLoad || added > 0) renderWallets();
     if(added > 0 && !firstLoad) pulse(document.querySelector(".slot"), "pulse");
     firstLoad = false;
     hidePreload();
   }
+  /* The page asks every 3 seconds. The server answers from a shared 3 second cache, so many visitors
+     cost Quicknode no more than one. After 10 minutes with no touch, click, key or scroll the page
+     slows to every 20 seconds, and a hidden tab asks for nothing. */
+  var POLL_FAST = 3000, POLL_SLOW = 20000, POLL_RETRY = 10000, IDLE_AFTER = 10 * 60 * 1000;
+  var lastActivity = Date.now(), pollTimer = null, busy = false;
+  ["pointerdown", "keydown", "touchstart", "wheel", "scroll"].forEach(function(ev){
+    window.addEventListener(ev, function(){ lastActivity = Date.now(); }, { passive: true });
+  });
+  function nextDelay(){ return (Date.now() - lastActivity > IDLE_AFTER) ? POLL_SLOW : POLL_FAST; }
+  function schedule(ms){ clearTimeout(pollTimer); pollTimer = setTimeout(poll, ms); }
   function poll(){
-    if(document.hidden) return;   // a hidden tab asks for nothing
-    fetch("/api/transfers", { headers: { "Accept": "application/json" } })
+    if(document.hidden){ schedule(nextDelay()); return; }
+    if(busy) return;
+    busy = true;
+    // First read, or one after a gap: the full five minutes. Otherwise only the newest blocks.
+    var full = !lastOkAt || (Date.now() - lastOkAt > 20000);
+    fetch(full ? "/api/transfers" : "/api/transfers?w=live", { headers: { "Accept": "application/json" } })
       .then(function(r){ return r.json().catch(function(){ return { error: "Unreadable response from /api/transfers" }; }); })
       .then(handle)
       .catch(function(err){
         renderDebug({ fetchError: String(err && err.message ? err.message : err) });
-        goOffline("Can't reach the feed right now. It retries every 20 seconds. Nothing on this page is simulated.");
-      });
+        goOffline("Can't reach the feed right now and keeps retrying. Nothing on this page is simulated.");
+      })
+      .then(function(){ busy = false; schedule(status === "offline" ? POLL_RETRY : nextDelay()); });
   }
+
+  /* ---------------- latest block readout ---------------- */
+  function renderReadout(blockChanged){
+    var box = $("liveReadout");
+    if(!box) return;
+    if(status !== "live" || !latestBlock){ box.hidden = true; return; }
+    box.hidden = false;
+    setText("rdBlock", Number(latestBlock).toLocaleString("en-US"));
+    if(blockChanged) pulse($("rdBlock"), "roll");
+    updateAgo();
+  }
+  function updateAgo(){
+    if(!$("rdAgo") || !lastOkAt) return;
+    setText("rdAgo", Math.max(0, Math.floor((Date.now() - lastOkAt) / 1000)) + "s");
+  }
+  setInterval(updateAgo, 1000);
 
   /* ---------------- filter buttons ---------------- */
   function wireButtons(attr, onPick){
@@ -295,7 +361,6 @@
   /* ---------------- start ---------------- */
   renderTape(null); renderStats(); renderWallets();
   poll();
-  setInterval(poll, 20000);
-  document.addEventListener("visibilitychange", function(){ if(!document.hidden) poll(); });
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) schedule(0); });
 
 })();
