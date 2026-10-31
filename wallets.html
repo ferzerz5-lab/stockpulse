@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>StockPulse | Wallets</title>
-<meta name="description" content="The most active wallets moving AAPL and NVDA stock tokens on Robinhood Chain, ranked by tokens moved.">
+<meta name="description" content="The most active wallets moving Robinhood stock tokens, ranked by USD value or by shares.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&family=Zilla+Slab:wght@600;700&display=swap" rel="stylesheet">
@@ -46,6 +46,7 @@
     <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="22" height="22">StockPulse</a>
     <nav class="panel-select" aria-label="Site">
       <a class="panel-btn" href="index.html">THE TAPE</a>
+      <a class="panel-btn" href="tokens.html">TOKENS</a>
       <a class="panel-btn" href="aapl.html">AAPL</a>
       <a class="panel-btn" href="nvda.html">NVDA</a>
       <a class="panel-btn active" href="wallets.html" aria-current="page">WALLETS</a>
@@ -60,25 +61,25 @@
       <span class="lamp-text" id="lampText">connecting...</span>
     </div>
     <p class="live-readout" id="liveReadout" hidden>Latest block <b id="rdBlock"></b>. Updated <span id="rdAgo"></span> ago.</p>
+    <p class="session-line" id="sessionLine" hidden></p>
     <h1>Wallets</h1>
-    <p class="masthead-sub">the most active wallets for each ticker, ranked by tokens moved</p>
+    <p class="masthead-sub">the most active wallets, ranked by what they moved</p>
   </div>
 
-  <div class="filters rise" style="--i:2" role="group" aria-label="Choose a ticker">
-    <span class="filter-label">Ticker</span>
-    <button type="button" class="panel-btn active" data-wticker="AAPL" aria-pressed="true">AAPL</button>
-    <button type="button" class="panel-btn" data-wticker="NVDA" aria-pressed="false">NVDA</button>
+  <div class="filters rise" style="--i:2" role="group" aria-label="Choose what to rank">
+    <span class="filter-label">Rank</span>
+    <select id="walletSel" class="select" aria-label="Choose all tokens or one token"><option value="ALL">All tokens, ranked by USD</option></select>
   </div>
   <p class="meta-line rise" style="--i:2" id="walletsMeta"></p>
 
   <div class="table-wrap rise" style="--i:3">
     <table class="data">
-      <thead><tr><th class="rank">#</th><th>Wallet</th><th class="num">Transfers</th><th class="num">Sent (tokens)</th><th class="num">Received (tokens)</th></tr></thead>
+      <thead><tr><th class="rank">#</th><th>Wallet</th><th class="num">Transfers</th><th class="num" id="thSent">Sent (USD)</th><th class="num" id="thRecv">Received (USD)</th></tr></thead>
       <tbody id="walletsBody"><tr><td colspan="5" class="empty-cell">Connecting to the chain.</td></tr></tbody>
     </table>
   </div>
   <p class="demo-note" id="demoNote"></p>
-  <p class="subnote">Ranked by tokens sent plus tokens received, counted in the chosen ticker only. The list counts every wallet seen since you opened this page, starting with the last five minutes of chain activity, so it fills in the longer the page stays open. Mints and burns involve the zero address and are left out. Each wallet links to its page on the block explorer.</p>
+  <p class="subnote">Ranked by amount sent plus amount received. With all tokens, the ranking uses USD from Chainlink prices, so transfers of tokens without a price are left out. Pick one token to rank by shares instead. The list counts every wallet seen since you opened this page, starting with the last five minutes of chain activity, so it fills in the longer the page stays open. Mints and burns involve the zero address and are left out. Each wallet links to its page on the block explorer.</p>
 
   <footer class="colophon">
     <div class="colophon-left">

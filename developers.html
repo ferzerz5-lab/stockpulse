@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>StockPulse | Developers</title>
-<meta name="description" content="Contract addresses, a ready eth_getLogs request, and the JSON shape behind StockPulse.">
+<meta name="description" content="How StockPulse uses the Quicknode Stock Token API, a ready eth_getLogs request, and the JSON shape behind the site.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&family=Zilla+Slab:wght@600;700&display=swap" rel="stylesheet">
@@ -20,6 +20,7 @@
     <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="22" height="22">StockPulse</a>
     <nav class="panel-select" aria-label="Site">
       <a class="panel-btn" href="index.html">THE TAPE</a>
+      <a class="panel-btn" href="tokens.html">TOKENS</a>
       <a class="panel-btn" href="aapl.html">AAPL</a>
       <a class="panel-btn" href="nvda.html">NVDA</a>
       <a class="panel-btn" href="wallets.html">WALLETS</a>
@@ -35,18 +36,15 @@
 
   <div class="article-wrap rise" style="--i:2">
     <div class="article">
-      <h2>The two tokens</h2>
-      <p>Both are standard ERC-20 tokens with 18 decimals. These are the contract addresses StockPulse watches.</p>
-      <table class="data">
-        <thead><tr><th>Ticker</th><th>Name</th><th>Contract</th></tr></thead>
-        <tbody>
-          <tr><td><span class="tag aapl">AAPL</span></td><td>Apple</td><td class="addr"><a href="https://robinhoodchain.blockscout.com/address/0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9" target="_blank" rel="noopener">0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9</a></td></tr>
-          <tr><td><span class="tag nvda">NVDA</span></td><td>Nvidia</td><td class="addr"><a href="https://robinhoodchain.blockscout.com/address/0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC" target="_blank" rel="noopener">0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC</a></td></tr>
-        </tbody>
-      </table>
+      <h2>The Stock Token API</h2>
+      <p>StockPulse uses Quicknode&rsquo;s <a href="https://www.quicknode.com/docs/robinhood/stock-token-api/overview" target="_blank" rel="noopener">Stock Token API</a> add-on on a Robinhood Chain endpoint. Two of its JSON-RPC methods do most of the work. <code>qn_getStockTokens</code> lists every official stock token with its address, symbol, multiplier and supply. <code>qn_getOracleHealth</code> returns the Chainlink prices, the current market session and whether the mint window is open.</p>
+<pre class="code">curl -X POST "$YOUR_QUICKNODE_ENDPOINT" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"qn_getStockTokens","params":[{}]}'</pre>
+      <p>StockPulse asks for the token list every 10 minutes and the prices every minute, and keeps both in memory so visitors share one call.</p>
 
       <h2>Read the transfers yourself</h2>
-      <p>Transfers are ordinary <code>Transfer</code> events, so one <code>eth_getLogs</code> call against your own Quicknode Robinhood Chain endpoint returns them. Get the latest block with <code>eth_blockNumber</code>, then set <code>fromBlock</code> a few thousand blocks behind it. Blocks arrive about every 100 milliseconds, so 3000 blocks is roughly five minutes.</p>
+      <p>Transfers are ordinary <code>Transfer</code> events, so one <code>eth_getLogs</code> call returns them. Pass the token addresses from <code>qn_getStockTokens</code>, and set <code>fromBlock</code> a few thousand blocks behind the latest block. Blocks arrive about every 100 milliseconds, so 3000 blocks is roughly five minutes. These are two of the tokens, AAPL and NVDA:</p>
 <pre class="code">curl -X POST "$YOUR_QUICKNODE_ENDPOINT" \
   -H "Content-Type: application/json" \
   -d '{
@@ -63,29 +61,37 @@
       "toBlock": "latest"
     }]
   }'</pre>
-      <p>Providers cap how many blocks one <code>eth_getLogs</code> call may cover, so keep the window small and page through it if you need more history.</p>
+      <p>Providers can cap how many addresses or blocks one <code>eth_getLogs</code> call may cover. StockPulse splits a refused query in half, remembers what the endpoint accepts, and reuses that.</p>
 
       <h2>Decode a log</h2>
       <ul>
         <li><code>topics[1]</code> is the sender and <code>topics[2]</code> is the receiver. Each is a 32-byte value, so take the last 20 bytes as the address.</li>
-        <li><code>data</code> is the amount. Divide it by 10<sup>18</sup> to get the token amount.</li>
+        <li><code>data</code> is the raw amount. Divide it by 10<sup>18</sup> to get the token amount.</li>
+        <li>Shares are the token amount times the token&rsquo;s <code>uiMultiplierDecimal</code>. A multiplier changes with splits and dividends, and not every token is one share.</li>
+        <li>USD is the token amount times the Chainlink price. The prices already include the multiplier, and a token without a usable feed has none.</li>
         <li>A transfer from the zero address is a mint. A transfer to the zero address is a burn. StockPulse tags both on the tape.</li>
         <li>Logs carry a block number, not a timestamp. StockPulse estimates each time from the latest block, so treat it as accurate to a second or two.</li>
       </ul>
 
-      <h2>This site's own endpoint</h2>
+      <h2>This site&rsquo;s endpoints</h2>
       <p>The pages load the last five minutes from <code>GET /api/transfers</code>, then poll <code>GET /api/transfers?w=live</code> every few seconds for just the newest blocks. Both return JSON in this shape, oldest transfer first:</p>
 <pre class="code">{
   "demo": false,
   "data": {
     "latestBlock": "string",
     "latestTime": "ISO timestamp of that block",
+    "session": { "name": "REGULAR", "mintWindowOpen": true },
+    "stockApi": true,
+    "tokenCount": number,
     "transfers": [
       {
-        "symbol": "AAPL or NVDA",
+        "symbol": "ticker",
+        "name": "company",
         "from": "0x address",
         "to": "0x address",
         "amount": number,
+        "shares": number,
+        "usd": number or null,
         "txHash": "0x hash",
         "logIndex": "hex string",
         "blockNumber": number,
@@ -94,15 +100,10 @@
     ]
   }
 }</pre>
-      <p>Responses are cached at the edge, for 3 seconds on the live view and 15 seconds on the five-minute view, so many visitors share one read. If the feed is not connected the response is <code>{"demo": true}</code>, and if the chain call fails it carries an <code>error</code> field. The page treats both as offline and shows nothing rather than inventing data.</p>
+      <p><code>GET /api/tokens</code> returns the directory behind the Tokens page: each token&rsquo;s symbol, name, address, multiplier, supply, price and price status. Responses are cached at the edge, for 3 seconds on the live view, 15 seconds on the five-minute view and 30 seconds on the token directory, so many visitors share one read. If the feed is not connected the response is <code>{"demo": true}</code>, and if the chain call fails it carries an <code>error</code> field. The page treats both as offline and shows nothing rather than inventing data.</p>
 
-      <h2>Add a ticker</h2>
-      <ol>
-        <li>Find the token on <a href="https://robinhoodchain.blockscout.com" target="_blank" rel="noopener">the block explorer</a> and copy its contract address from the token page.</li>
-        <li>Add <code>{ symbol, name, address }</code> to the <code>WATCHLIST</code> array at the top of <code>api/transfers.js</code>.</li>
-        <li>Redeploy. A wrong address fails silently and just shows an empty reel, so check it twice.</li>
-      </ol>
-      <p>The tape pages style AAPL and NVDA specially. Any other symbol appears with a neutral color.</p>
+      <h2>If the add-on is unavailable</h2>
+      <p>If the Stock Token API does not answer, the function falls back to AAPL and NVDA, the two addresses published in <a href="https://www.quicknode.com/guides/robinhood/read-stock-tokens-data-onchain" target="_blank" rel="noopener">Quicknode&rsquo;s guide to reading stock tokens</a>. Amounts then show without multipliers or USD values, <code>stockApi</code> is <code>false</code>, and the page says so.</p>
     </div>
   </div>
 
